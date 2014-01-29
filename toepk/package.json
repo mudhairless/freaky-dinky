@@ -1,0 +1,10 @@
+{
+	"friendly-name": "Test Game",
+	"short-name": "testgame",
+	"version": "1.0.0",
+	"author": "Ebben Feagan",
+	"website": "http://ext.freebasic.net",
+	"at-load": null,
+	"at-exit": null,
+	"default": "menu.json"
+}
