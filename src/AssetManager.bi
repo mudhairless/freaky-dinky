@@ -7,6 +7,7 @@ enum AssetType
     sprite_asset
     sound_asset
     music_asset
+    map_asset
 end enum
 
 type status_callback as sub ( byval as integer )
@@ -24,10 +25,16 @@ type AssetManager
     declare function load( ) as integer
 
     declare function lookup( byref name_ as string, byref type_ as AssetType ) as any ptr
+
+    declare sub dispose( )
     
     private:
+    declare sub m_resize()
+    declare sub m_compact()
     m_status as status_callback
     m_assets as any ptr
     m_na as uinteger
+    m_s as uinteger
+    m_li as uinteger
 end type
 
