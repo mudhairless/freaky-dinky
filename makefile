@@ -16,7 +16,6 @@ endif
 all: $(EXENAME)
 
 %.o : %.bas
-	@test -d src/obj || $(MD) src/obj
 	$(FBC) -m game -i $(EXTDIR)/include/freebasic -i lib/lisp/inc $(FBC_FLAGS) -c $< -o $@
 
 $(EXENAME): $(OBJS)
