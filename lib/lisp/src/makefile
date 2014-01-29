@@ -1,48 +1,26 @@
+DIRPREFIX = ..
+include $(DIRPREFIX)/common.mki
 ##########################
 
-LIBNAME := lisp
+LIBNAME := $(DIRPREFIX)/$(LIBRARY_DIR)/liblisp.a
 
-SRCS := lisp.bas 
-SRCS += lisp_int.bas 
-SRCS += lisp_ctx.bas 
-SRCS += lisp_lexer.bas 
-SRCS += lisp_object.bas 
-SRCS += lisp_objects.bas 
-SRCS += lisp_parser.bas 
-SRCS += lisp_funcs.bas
-SRCS += lisp_eval.bas
-SRCS += lisp_funcs1.bas
-SRCS += lisp_funcs2.bas
-SRCS += lisp_funcs3.bas
+SRCS := $(wildcard *.bas)
 
-HDRS := $(wildcard *.bi) $(wildcard ../inc/lisp_*.bi)
+HDRS := $(wildcard ../inc/*.bi)
 
 OBJS := $(patsubst %.bas,obj/%.o,$(SRCS))
 
 ##########################
 
-FBC := fbc
-FBCFLAGS := -i ../inc
-
-ifdef DEBUG
-FBCFLAGS += -g -d DEBUG -w pedantic
-endif
-
-.SUFFIXES:
-.SUFFIXES: .bas .bi
-
-VPATH = .
-
-##########################
-
-all: ../lib/lib$(LIBNAME).a
+all: $(LIBNAME)
 
 obj/%.o : %.bas $(HDRS)
-	$(FBC) $(FBCFLAGS) -c $< -o $@
+	$(FBC) -i $(DIRPREFIX)/$(INCLUDE_DIR) $(FBC_FLAGS) -c $< -o $@
 
-../lib/lib$(LIBNAME).a: $(OBJS)
-	$(FBC) -lib $(FBCFLAGS) $(OBJS) $(LIBS) $(RCS) -x ../lib/$(LIBNAME)
+$(LIBNAME): $(OBJS)
+	@test -d $(DIRPREFIX)/$(LIBRARY_DIR) || $(MD) $(DIRPREFIX)/$(LIBRARY_DIR)
+	$(FBC) -lib $(FBC_FLAGS) $(OBJS) $(LIBS) -x $(LIBNAME)
 
 .PHONY : clean
 clean:
-	-rm -f $(OBJS) $(APP)
+	$(RM) $(OBJS) $(LIBNAME)
