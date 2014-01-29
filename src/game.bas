@@ -1,11 +1,12 @@
-#include once "ext/file/zipfile.bi"
-'#include once "ext/graphics/image.bi"
+#include once "game-defs.bi"
+
 #include once "ext/json.bi"
-#include once "lisp.bi"
+
 
 dim shared lm as LISP.LispModule ptr
 dim shared pakf as ext.ZipFile ptr
 dim shared next_l as string
+dim shared am as AssetManager ptr
 
 type events
     as string ontick, onclick, onkey, onload, onunload
@@ -37,9 +38,13 @@ function eventLoop( byref ev as events ) as string
 
 end function
 
+lm = new LISP.LispModule
+registerGfxApi
+
 var ret = main
 if pakf <> 0 then delete pakf
 if lm <> 0 then delete lm
+if am <> 0 then delete am
 ? "Return Value: " & ret
 end ret
 
@@ -89,7 +94,17 @@ function loadScripts( byval al as ext.json.JSONvalue ptr ) as ext.bool
 end function
 
 function loadAssets( byval al as ext.json.JSONvalue ptr ) as ext.bool
+    if am = 0 then am = new AssetManager
     if al <> 0 then
+        if al->valueType <> ext.json.array then return ext.false
+        var arr = al->getArray()
+        for i as uinteger = 0 to arr->length -1
+            var fn = arr->at(i)->getString()
+            var fnf = pakf->open(fn)
+            am->add(fn,image_asset,fnf)
+        next
+        am->load()
+        am->dispose()
         return ext.true
     else
         return ext.false
@@ -97,8 +112,6 @@ function loadAssets( byval al as ext.json.JSONvalue ptr ) as ext.bool
 end function
 
 function runit( byref fn as string ) as ext.bool
-
-    if lm = 0 then lm = new LISP.LispModule()
 
     var mf = pakf->open(fn)
     if mf->open() = ext.true then
