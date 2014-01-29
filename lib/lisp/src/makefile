@@ -15,6 +15,7 @@ OBJS := $(patsubst %.bas,obj/%.o,$(SRCS))
 all: $(LIBNAME)
 
 obj/%.o : %.bas $(HDRS)
+	@test -d obj || $(MD) obj
 	$(FBC) -i $(DIRPREFIX)/$(INCLUDE_DIR) $(FBC_FLAGS) -c $< -o $@
 
 $(LIBNAME): $(OBJS)
