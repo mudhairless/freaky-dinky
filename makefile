@@ -19,7 +19,7 @@ all: $(EXENAME)
 	$(FBC) -m game -i $(EXTDIR)/include/freebasic -i lib/lisp/inc $(FBC_FLAGS) -c $< -o $@
 
 $(EXENAME): $(OBJS)
-	$(FBC) -m game $(FBC_FLAGS) $(OBJS) -p $(EXTDIR)/lib/$(TARGET) -p lib/lisp/lib/$(TARGET) -x $(EXENAME)
+	$(FBC) -m game $(FBC_FLAGS) $(OBJS) -p $(EXTDIR)/bin/$(TARGET) -p $(EXTDIR)/lib/$(TARGET) -p lib/lisp/lib/$(TARGET) -x $(EXENAME)
 
 .PHONY : clean
 clean:
