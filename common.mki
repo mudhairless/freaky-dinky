@@ -136,5 +136,5 @@ ifndef DOCPREFIX
 endif
 
 ifdef DEBUG
-FBC_CFLAGS += -g -d DEBUG -w pedantic
+FBC_CFLAGS := -g -d DEBUG -w all
 endif
