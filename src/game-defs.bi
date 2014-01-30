@@ -5,5 +5,6 @@
 extern lm as LISP.LispModule ptr
 extern pakf as ext.ZipFile ptr
 extern am as AssetManager ptr
+extern next_l as string
 
 declare sub registerGfxApi

@@ -21,16 +21,46 @@ declare function main () as integer
 
 function eventLoop( byref ev as events ) as string
 
+    var ret = 0
+
     if ev.onload <> "" then
-        lm->Eval("(" & ev.onload & ")")
+        '? "running: '" & "(" & ev.onload & ")" & "'"
+        ret = lm->Eval("(" & ev.onload & ")")
+        '? "onload: " & ret
     end if
 
-    while next_l = ""
-        next_l = "-"
+    dim as integer mx, my, mb
+
+    while ret = 0 andalso next_l = ""
+        if ev.ontick <> "" then
+            ? "running: '" & "(" & ev.ontick & ")" & "'"
+            ret = lm->Eval("(" & ev.ontick & ")")
+            ? "ontick: " & ret
+        end if
+
+        var k = inkey()
+
+        if k <> "" then
+            if ev.onkey <> "" then
+                ret = lm->Eval("(" & ev.onkey & " " & asc(k) & ")")
+                ? "onkey: " & ret
+            end if
+        end if
+
+        if screenptr <> 0 then
+        getmouse mx, my,,mb
+        if mx > -1 andalso (mb and 1 orelse mb and 2) then
+            if ev.onclick <> "" then
+                ret = lm->Eval("(" & ev.onclick & " " & mx & " " & my & " " & mb & ")")
+                ? "onclick: " & ret
+            end if
+        end if
+        end if
     wend
 
     if ev.onunload <> "" then
-        lm->Eval("(" & ev.onunload & ")")
+        ret = lm->Eval("(" & ev.onunload & ")")
+        ? "onunload: " & ret
     end if
 
     if next_l = "-" then next_l = ""
@@ -56,7 +86,7 @@ function evalFile( byref fn as const string ) as integer
         var xits = ""
         while not xitf->eof()
             var xtmp = xitf->readLine()
-            xits &= xtmp
+            xits &= !"\n" & xtmp
         wend
         xitf->close()
         var xret = lm->Eval(xits)
@@ -73,7 +103,7 @@ end function
 
 function loadScripts( byval al as ext.json.JSONvalue ptr ) as ext.bool
     if al <> 0 then
-        if al->valueType <> ext.json.jstring orelse al->valueType <> ext.json.array then
+        if al->valueType <> ext.json.jstring andalso al->valueType <> ext.json.array then
             return ext.false
         else
             if al->valuetype = ext.json.jstring then
@@ -96,16 +126,24 @@ end function
 function loadAssets( byval al as ext.json.JSONvalue ptr ) as ext.bool
     if am = 0 then am = new AssetManager
     if al <> 0 then
-        if al->valueType <> ext.json.array then return ext.false
-        var arr = al->getArray()
-        for i as uinteger = 0 to arr->length -1
-            var fn = arr->at(i)->getString()
-            var fnf = pakf->open(fn)
-            am->add(fn,image_asset,fnf)
-        next
-        am->load()
-        am->dispose()
-        return ext.true
+        if al->valueType = ext.json.array then 
+            var arr = al->getArray()
+            for i as uinteger = 0 to arr->length -1
+                var fn = arr->at(i)->getString()
+                var fnf = pakf->open(fn)
+                am->add(fn,image_asset,fnf)
+            next
+            am->load()
+            am->dispose()
+            return ext.true
+        elseif al->valueType= ext.json.jstring then
+            am->add(al->getString(),image_asset,pakf->open(al->getString()))
+            am->load()
+            am->dispose()
+            return ext.true
+        else
+            return ext.false
+        end if
     else
         return ext.false
     end if

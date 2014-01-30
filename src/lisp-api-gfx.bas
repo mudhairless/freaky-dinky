@@ -5,6 +5,14 @@
 
 using LISP
 
+define_lisp_function(quit,args)
+
+    next_l = "-"
+
+    return _NIL_
+
+end_lisp_function()
+
 define_lisp_function(setscreensize,args)
 
     if( _LENGTH(args) < 2 ) then
@@ -15,7 +23,8 @@ define_lisp_function(setscreensize,args)
 	_OBJ(p2) = _EVAL(_CAR(_CDR(args)))				'' 2nd arg
 
     if _IS_INTEGER(p1) andalso _IS_INTEGER(p2) then
-        screenres *p1, *p2, 32
+	screenres 640, 480, 32
+        'screenres *p1, *p2, 32
     else
         _RAISEERROR(LISP_ERR_INVALID_ARGUMENT)
     end if
@@ -63,5 +72,6 @@ sub registerGfxApi
     BIND_FUNC(ctx,"set-screen-size",setscreensize)
     BIND_FUNC(ctx,"place-image",placeimage)
     BIND_FUNC(ctx,"clear-screen",clearscreen)
+    BIND_FUNC(ctx,"quit",quit)
 
 end sub
