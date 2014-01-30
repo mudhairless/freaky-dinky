@@ -1,6 +1,7 @@
 {
-    "assets": ["assets/images/bg/menu.png"],
-    "scripts": ["scripts/menu.lsp"],
+    "assets": "assets/images/bg/menu.png",
+    "scripts": "scripts/menu.lsp",
     "onload": "loaded",
-    "onclick": "clicked"
+    "onclick": "clicked",
+    "onkey": "onkey"
 }
