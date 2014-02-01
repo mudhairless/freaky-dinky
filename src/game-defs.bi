@@ -7,4 +7,7 @@ extern pakf as ext.ZipFile ptr
 extern am as AssetManager ptr
 extern next_l as string
 
+declare function getLispError() as string
+
 declare sub registerGfxApi
+declare sub registerRTapi

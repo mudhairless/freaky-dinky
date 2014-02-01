@@ -1,8 +1,8 @@
 #include once "game-defs.bi"
-
+#include once "ext/log.bi"
 #include once "ext/json.bi"
 
-
+using ext
 dim shared lm as LISP.LispModule ptr
 dim shared pakf as ext.ZipFile ptr
 dim shared next_l as string
@@ -24,26 +24,42 @@ function eventLoop( byref ev as events ) as string
     var ret = 0
 
     if ev.onload <> "" then
-        '? "running: '" & "(" & ev.onload & ")" & "'"
+        DEBUG("Sending onload signal")
         ret = lm->Eval("(" & ev.onload & ")")
-        '? "onload: " & ret
+        if ret <> 0 then
+            ext.setError(1024,"LISP error")
+            WARN("Error in onload script: " & getLispError)
+        end if
     end if
 
     dim as integer mx, my, mb
 
     while ret = 0 andalso next_l = ""
         if ev.ontick <> "" then
-            ? "running: '" & "(" & ev.ontick & ")" & "'"
+            DEBUG("Sending ontick signal")
             ret = lm->Eval("(" & ev.ontick & ")")
-            ? "ontick: " & ret
+            if ret <> 0 then
+                ext.setError(1024,"LISP error")
+                WARN("Error in ontick script: " & getLispError)
+            end if
         end if
 
         var k = inkey()
 
         if k <> "" then
             if ev.onkey <> "" then
-                ret = lm->Eval("(" & ev.onkey & " " & asc(k) & ")")
-                ? "onkey: " & ret
+                DEBUG("Sending onkey signal")
+                var signal = 0
+                if len(k) > 1 then
+                    signal = (k[0] shl 8) or k[1]
+                else
+                    signal = asc(k)
+                end if
+                ret = lm->Eval("(" & ev.onkey & " " & signal & ")")
+                if ret <> 0 then
+                    ext.setError(1024,"LISP error")
+                    WARN("Error in onkey script: " & getLispError)
+                end if
             end if
         end if
 
@@ -51,80 +67,98 @@ function eventLoop( byref ev as events ) as string
         getmouse mx, my,,mb
         if mx > -1 andalso (mb and 1 orelse mb and 2) then
             if ev.onclick <> "" then
+                DEBUG("Sending onclick signal")
                 ret = lm->Eval("(" & ev.onclick & " " & mx & " " & my & " " & mb & ")")
-                ? "onclick: " & ret
+                if ret <> 0 then
+                    ext.setError(1024,"LISP error")
+                    WARN("Error in onclick script: " & getLispError)
+                end if
             end if
         end if
         end if
     wend
 
     if ev.onunload <> "" then
+        DEBUG("Sending onunload signal")
         ret = lm->Eval("(" & ev.onunload & ")")
-        ? "onunload: " & ret
+        if ret <> 0 then
+            ext.setError(1024,"LISP error")
+            WARN("Error in onunload script: " & getLispError)
+        end if
     end if
 
     if next_l = "-" then next_l = ""
+    if next_l <> "" then
+        INFO("Chaining to " & next_l)
+    else
+        INFO("Exiting...")
+    end if
     return next_l
 
 end function
 
+setLogMethod(LOG_FILE)
+setLogLevel(_DEBUG)
+INFO("Starting engine")
 lm = new LISP.LispModule
 registerGfxApi
+registerRTapi
 
 var ret = main
 if pakf <> 0 then delete pakf
 if lm <> 0 then delete lm
 if am <> 0 then delete am
-? "Return Value: " & ret
+var vret = ext.getError()
+if vret <> 0 then
+    ret = vret
+    FATAL(ext.getErrorText(vret))
+end if
+INFO("Return Value: " & ret)
 end ret
 
 function evalFile( byref fn as const string ) as integer
-    var xitf = pakf->open(fn)
-    if xitf->open() = ext.true then
-        return __LINE__
-    else
-        var xits = ""
-        while not xitf->eof()
-            var xtmp = xitf->readLine()
-            xits &= !"\n" & xtmp
-        wend
-        xitf->close()
-        var xret = lm->Eval(xits)
-        if xret <> 0 then
-            ? "Error in script: " & fn
-            ? "Line: " & lm->ErrorLine();
-            ? " Column: " & lm->ErrorColumn()
-            ? lm->ErrorText()
-            return __LINE__
-        end if
-    end if
-    return 0
+    return lm->Eval( "(include-file " & chr(34) & fn & chr(34) & ")" )
 end function
 
 function loadScripts( byval al as ext.json.JSONvalue ptr ) as ext.bool
     if al <> 0 then
         if al->valueType <> ext.json.jstring andalso al->valueType <> ext.json.array then
+            WARN("The value of scripts was not a string or an array.")
             return ext.false
         else
             if al->valuetype = ext.json.jstring then
+                DEBUG("Loading " & al->getString())
                 var lret = evalFile(al->getString())
-                if lret <> 0 then return ext.false
+                if lret <> 0 then
+                    WARN("Error in script (" & al->getString() & "): " & getLispError)
+                    return ext.false
+                end if
             else
                 var arr = al->getArray()
                 for n as uinteger = 0 to arr->length -1
+                    DEBUG("Loading " & arr->at(n)->getString())
                     var lret = evalFile(arr->at(n)->getString())
-                    if lret <> 0 then return ext.false
+                    if lret <> 0 then
+                        WARN("Error in script (" & arr->at(n)->getString() & "): " & getLispError)
+                        return ext.false
+                    end if
                 next
             end if
             return ext.true
         end if
     else
+        FATAL("NULL value passed to loadScripts.")
         return ext.false
     end if
 end function
 
 function loadAssets( byval al as ext.json.JSONvalue ptr ) as ext.bool
-    if am = 0 then am = new AssetManager
+    if am = 0 then
+        am = new AssetManager
+        INFO("Creating new AssetManager")
+    else
+        INFO("Reusing existing AssetManager")
+    end if
     if al <> 0 then
         if al->valueType = ext.json.array then 
             var arr = al->getArray()
@@ -142,9 +176,11 @@ function loadAssets( byval al as ext.json.JSONvalue ptr ) as ext.bool
             am->dispose()
             return ext.true
         else
+            WARN("Value of assets not string or array")
             return ext.false
         end if
     else
+        FATAL("NULL passed to loadAssets")
         return ext.false
     end if
 end function
@@ -152,32 +188,33 @@ end function
 function runit( byref fn as string ) as ext.bool
 
     var mf = pakf->open(fn)
+    INFO("Running: " & fn)
     if mf->open() = ext.true then
-        ? "Error opening " & fn
+        FATAL("Error opening " & fn)
         return ext.true
     end if
     dim mfj as ext.json.JSONobject
     var mft = mfj.loadFile(*mf)
     if mft = 0 then
-        ? "Error parsing " & fn
+        FATAL( "Error parsing " & fn)
         return ext.true
     end if
     if mfj.children() = 0 then
-        ? "Error in JSON syntax in " & fn
+        WARN( "Error in JSON syntax in " & fn)
         return ext.true
     end if
 
     var assets = mfj.child("assets")
     var assetsr = loadAssets(assets)
     if assetsr = ext.false then
-        ? "Error loading assets " & fn
+        WARN("Error loading assets " & fn)
         return ext.true
     end if
 
     var scripts = mfj.child("scripts")
     var scriptsr = loadScripts(scripts)
     if scriptsr = ext.false then
-        ? "Error loading scripts in " & fn
+        WARN("Error loading scripts in " & fn)
         return ext.true
     end if
 
@@ -196,10 +233,11 @@ function runit( byref fn as string ) as ext.bool
     var evret = eventLoop( ev )
     var ret = ext.false
     if evret <> "" then
+        INFO("Collecting Garbage")
         lm->GarbageCollect()
         ret = runit(evret)
     end if
-    
+    INFO("Collecting Garbage")
     lm->GarbageCollect()
 
     return ret
@@ -223,6 +261,7 @@ function getPkgName() as string
         pkgname = left(pkgname,len(pkgname)-3) & "epk"
     end if
 
+    INFO("Package name: " & pkgname)
     function = pkgname
 
 end function
@@ -233,17 +272,13 @@ function main () as integer
     pakf = new ext.ZipFile(pakname)
     var e = ext.getError()
     if e <> 0 then
-        ? "Could not open " & pakname
-        ? ext.getErrorText(e)
-        ? "Error: " & __FILE__ & ":" & __LINE__
+        FATAL( "Could not open " & pakname & ": " & getErrorText(e) )
         return __LINE__ -1
     end if
     
     var pakinfof = pakf->open("package.json")
     if pakinfof = 0 then
-        ? "Could not open " & pakname
-        ? "The package file may be corrupted or missing."
-        ? "Error: " & __FILE__ & ":" & __LINE__
+        FATAL("The package file may be corrupted or missing.")
         return __LINE__ -1
     end if
 
@@ -251,16 +286,12 @@ function main () as integer
     var r = pakinfoj.loadFile(*pakinfof)
 
     if r = 0 then
-        ? "Could not open " & pakname
-        ? "The package info file may be corrupted or missing."
-        ? "Error: " & __FILE__ & ":" & __LINE__
+        FATAL("The package info file may be corrupted or missing.")
         return __LINE__ -1
     end if
 
     if pakinfoj.children = 0 then
-        ? "Could not open " & pakname
-        ? "The package info file may be corrupted or missing."
-        ? "Error: " & __FILE__ & ":" & __LINE__
+        FATAL("The package info file may be corrupted or missing.")
         return __LINE__ -1
     end if
 
@@ -275,20 +306,11 @@ function main () as integer
         if prel->valueType = ext.json.jvalue_type.jstring then
             var prelf = pakf->open(prel->getString())
             if prelf->open() = ext.true then
-                ? "Could not open exit script: " & prel->getString()
+                FATAL("Could not open at-load script: " & prel->getString())
             else
-                var prels = ""
-                while not prelf->eof()
-                    var preltmp = prelf->readLine()
-                    prels &= preltmp
-                wend
-                prelf->close()
-                var pret = lm->Eval(prels)
+                var pret = evalFile(prel->getString())
                 if pret <> 0 then
-                    ? "Error in script: " & prel->getString()
-                    ? "Line: " & lm->ErrorLine();
-                    ? " Column: " & lm->ErrorColumn()
-                    ? lm->ErrorText()
+                    WARN("Error in script (" & prel->getString() & "): " & getLispError)
                     return __LINE__
                 end if
             end if
@@ -302,20 +324,11 @@ function main () as integer
         if atxit->valueType = ext.json.jvalue_type.jstring then
             var xitf = pakf->open(atxit->getString())
             if xitf->open() = ext.true then
-                ? "Could not open exit script: " & atxit->getString()
+                FATAL("Could not open at-exit script: " & atxit->getString())
             else
-                var xits = ""
-                while not xitf->eof()
-                    var xtmp = xitf->readLine()
-                    xits &= xtmp
-                wend
-                xitf->close()
-                var xret = lm->Eval(xits)
+                var xret = evalFile(atxit->getString())
                 if xret <> 0 then
-                    ? "Error in script: " & atxit->getString()
-                    ? "Line: " & lm->ErrorLine();
-                    ? " Column: " & lm->ErrorColumn()
-                    ? lm->ErrorText()
+                    WARN("Error in script (" & atxit->getString() & "): " & getLispError)
                     return __LINE__
                 end if
             end if
