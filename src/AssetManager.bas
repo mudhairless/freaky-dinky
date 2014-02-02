@@ -3,6 +3,7 @@
 #include once "ext/graphics/image.bi"
 #include once "ext/log.bi"
 #include once "AssetManager.bi"
+#include once "game-defs.bi"
 #include once "fbgfx.bi"
 
 type gen_asset
@@ -42,28 +43,29 @@ end sub
 
 sub AssetManager.m_compact( )
 
-    DEBUG("Compacting AssetManager")
+    DEBUG("AssetManager compacting")
     var fcnt = 0u
-    var cnt = -1
+    var cnt = 0u
     var m_assets_ = cast(gen_asset ptr,m_assets)
 
+    var new_assets = new gen_asset[m_s]
+
     for i as uinteger = 0 to m_s -1
-        if m_assets_[i].rc = 0 then
-            cnt = i
-        else
-            if cnt >= 0 then
-                m_assets_[cnt] = m_assets_[i]
-                cnt = -1
-                m_assets_[i].f = 0
-                m_assets_[i].rc = 0
-                m_assets_[i].d = 0
-                m_assets_[i].n = ""
-                fcnt += 1
-            end if
+        if m_assets_[i].rc > 0 andalso m_assets_[i].n <> "" then
+            DEBUG("AssetManager not collecting: " & m_assets_[i].n)
+            new_assets[cnt] = m_assets_[i]
+            cnt += 1
         end if
     next
-    m_na -= fcnt
-    DEBUG("AssetManager compacted " & fcnt & " items, " & m_na & " remain")
+    DEBUG("AssetManager compacted " & m_na - cnt & " items, " & cnt & " remain")
+    m_na = cnt
+    delete[] m_assets_
+    m_assets = new_assets
+    DEBUG("AssetManager remaining assets:")
+    for i as integer = 0 to m_na -1
+        DEBUG(new_assets[i].n)
+    next
+    DEBUG("AssetManager end assets")
 
 end sub
 
@@ -115,11 +117,21 @@ private function load_map_asset( byval dt as gen_asset ptr ) as ext.bool
     return ext.true
 end function
 
+private function load_script_asset( byval dt as gen_asset ptr ) as ext.bool
+    DEBUG("Loading script asset: " & dt->n)
+    if evalFile(dt->n) = 0 then
+        return ext.true
+    else
+        return ext.false
+    end if
+end function
+
 function AssetManager.load( ) as integer
     var timein = timer
     var m_assets_ = cast(gen_asset ptr,m_assets)
     for i as uinteger = 0 to m_na -1
 
+    if m_assets_[i].f <> 0 then
         select case m_assets_[i].t
         case string_asset
             if load_string_asset(@m_assets_[i]) = ext.false then return i+1
@@ -133,10 +145,13 @@ function AssetManager.load( ) as integer
             if load_music_asset(@m_assets_[i]) = ext.false then return i+1
         case map_asset
             if load_map_asset(@m_assets_[i]) = ext.false then return i+1
+        case script_asset
+            if load_script_asset(@m_assets_[i]) = ext.false then return i+1
         case else 'invalid asset type
             return -1
         end select
-
+    end if
+    
     if m_status <> 0 then
         m_status(int(((i+1)/m_na+1)*100))
     end if
@@ -158,10 +173,12 @@ sub AssetManager.dispose( )
             m_assets_[i].rc = 1
         else
             m_assets_[i].rc = 0
+            DEBUG("AssetManager " & m_assets_[i].n & " is unneeded")
             if m_assets_[i].dfree <> 0 then
                 m_assets_[i].dfree(m_assets_[i].d)
                 m_assets_[i].d = 0
             end if
+            m_assets_[i].f = 0
         end if
     next
 
@@ -191,7 +208,8 @@ end function
 
 sub AssetManager.add(   byref name_ as string, _
                         byval type_ as AssetType, _
-                        byval file_ as ext.File ptr )
+                        byval file_ as ext.File ptr, _
+                        byval d_ as any ptr )
     var m_assets_ = cast(gen_asset ptr,m_assets)
     if m_na = m_s then m_resize
     var tmp = AssetType.string_asset
@@ -200,6 +218,9 @@ sub AssetManager.add(   byref name_ as string, _
         m_assets_[m_na].t = type_
         m_assets_[m_na].f = file_
         m_assets_[m_na].rc = 2
+        if d_ <> 0 then
+            m_assets_[m_na].d = d_
+        end if
         m_na += 1
         INFO("AssetManager added new asset: " & name_)
     else

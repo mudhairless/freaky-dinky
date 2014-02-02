@@ -1,0 +1,28 @@
+;; Level 1
+(defun loaded ()
+    (log-message 0 "Loaded level 1")
+    (place-image 0 0 "assets/images/bg/level1.jpg")
+    )
+
+(defun close-window ()
+    (log-message 0 "user requested window close")
+    (quit)
+    )
+
+(defun key-press (c)
+    (if (eq (key-code "escape") c)
+        (quit)
+        (nil)
+        )
+    (if (eq (key-code "left") c)
+        (quit)
+        (nil)
+        )
+    (if (eq (key-code "window-close") c)
+        (and
+            (log-message 0 "user requested window close")
+            (quit)
+            )
+        (princ c)
+        )
+    )

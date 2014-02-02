@@ -8,6 +8,7 @@ extern am as AssetManager ptr
 extern next_l as string
 
 declare function getLispError() as string
+declare function evalFile( byref fn as const string ) as integer
 
 declare sub registerGfxApi
 declare sub registerRTapi

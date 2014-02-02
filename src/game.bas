@@ -19,6 +19,13 @@ declare function getPkgName() as string
 declare function runit( byref fn as string ) as ext.bool
 declare function main () as integer
 
+sub resetLisp
+    if lm <> 0 then delete lm
+    lm = new LISP.LispModule
+    registerGfxApi
+    registerRTapi
+end sub
+
 function eventLoop( byref ev as events ) as string
 
     var ret = 0
@@ -100,9 +107,7 @@ end function
 setLogMethod(LOG_FILE)
 setLogLevel(_DEBUG)
 INFO("Starting engine")
-lm = new LISP.LispModule
-registerGfxApi
-registerRTapi
+resetLisp
 
 var ret = main
 if pakf <> 0 then delete pakf
@@ -117,31 +122,34 @@ INFO("Return Value: " & ret)
 end ret
 
 function evalFile( byref fn as const string ) as integer
+    DEBUG("evalFile " & fn)
     return lm->Eval( "(include-file " & chr(34) & fn & chr(34) & ")" )
 end function
 
 function loadScripts( byval al as ext.json.JSONvalue ptr ) as ext.bool
+    if am = 0 then
+        am = new AssetManager
+        INFO("Creating new AssetManager")
+    else
+        INFO("Reusing existing AssetManager")
+    end if
     if al <> 0 then
         if al->valueType <> ext.json.jstring andalso al->valueType <> ext.json.array then
             WARN("The value of scripts was not a string or an array.")
             return ext.false
         else
             if al->valuetype = ext.json.jstring then
-                DEBUG("Loading " & al->getString())
-                var lret = evalFile(al->getString())
-                if lret <> 0 then
-                    WARN("Error in script (" & al->getString() & "): " & getLispError)
-                    return ext.false
-                end if
+                'DEBUG("Loading " & al->getString())
+                var fn = al->getString()
+                var fnf = pakf->open(fn)
+                am->add(fn,script_asset,fnf)
             else
                 var arr = al->getArray()
                 for n as uinteger = 0 to arr->length -1
-                    DEBUG("Loading " & arr->at(n)->getString())
-                    var lret = evalFile(arr->at(n)->getString())
-                    if lret <> 0 then
-                        WARN("Error in script (" & arr->at(n)->getString() & "): " & getLispError)
-                        return ext.false
-                    end if
+                    'DEBUG("Loading " & arr->at(n)->getString())
+                    var fn = arr->at(n)->getString()
+                    var fnf = pakf->open(fn)
+                    am->add(fn,script_asset,fnf)
                 next
             end if
             return ext.true
@@ -167,13 +175,9 @@ function loadAssets( byval al as ext.json.JSONvalue ptr ) as ext.bool
                 var fnf = pakf->open(fn)
                 am->add(fn,image_asset,fnf)
             next
-            am->load()
-            am->dispose()
             return ext.true
         elseif al->valueType= ext.json.jstring then
             am->add(al->getString(),image_asset,pakf->open(al->getString()))
-            am->load()
-            am->dispose()
             return ext.true
         else
             WARN("Value of assets not string or array")
@@ -186,9 +190,16 @@ function loadAssets( byval al as ext.json.JSONvalue ptr ) as ext.bool
 end function
 
 function runit( byref fn as string ) as ext.bool
+    next_l = ""
+    resetLisp
 
     var mf = pakf->open(fn)
-    INFO("Running: " & fn)
+    if mf = 0 then
+        FATAL("The requested file (" & fn & ") was not found")
+        return ext.true
+    else
+        INFO("Running: " & fn)
+    end if
     if mf->open() = ext.true then
         FATAL("Error opening " & fn)
         return ext.true
@@ -217,6 +228,9 @@ function runit( byref fn as string ) as ext.bool
         WARN("Error loading scripts in " & fn)
         return ext.true
     end if
+
+    am->dispose()
+    am->load()
 
     dim ev as events
     var tmp = mfj.child("ontick")

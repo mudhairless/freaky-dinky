@@ -1,0 +1,6 @@
+{
+    "assets": "assets/images/bg/level1.jpg",
+    "scripts": "scripts/level1.lsp",
+    "onload": "loaded",
+    "onkey": "key-press"
+}

@@ -135,6 +135,11 @@ private function LISP_LEXER_CTX.getcomment() as LISP_TOKEN_ID
 			lineno += 1
 			column = 0
 			exit do
+		case 10
+			lineno += 1
+			column = 0
+			if peekchar() = 13 then getchar()
+			exit do
 		case LEX_CHAR_EOF
 			exit do
 		end select
@@ -280,6 +285,12 @@ private function LISP_LEXER_CTX.getstring( ) as LISP_TOKEN_ID
 			lineno += 1
 			column = 0
 
+		case 10
+			token &= chr(c)
+			lineno += 1
+			column = 0
+			if peekchar() = 13 then token &= chr(getchar())
+
 		case 34
 			exit do
 
@@ -411,8 +422,8 @@ private function LISP_LEXER_CTX.gettoken( ) as LISP_TOKEN_ID
 			exit do
 
 		case else
-			function = LISP_TK_CHAR
-			token = chr(c)
+			''function = LISP_TK_CHAR
+			''token = chr(c)
 			exit do
 
 		end select

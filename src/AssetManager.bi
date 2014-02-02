@@ -8,6 +8,7 @@ enum AssetType
     sound_asset
     music_asset
     map_asset
+    script_asset
 end enum
 
 type status_callback as sub ( byval as integer )
@@ -18,7 +19,8 @@ type AssetManager
     declare destructor
     declare sub add(   byref name_ as string, _
                         byval type_ as AssetType, _
-                        byval file_ as ext.File ptr )
+                        byval file_ as ext.File ptr, _
+                        byval d_ as any ptr = 0 )
 
     declare sub cb( byval as status_callback )
 

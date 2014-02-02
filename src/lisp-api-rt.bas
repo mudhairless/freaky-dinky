@@ -13,7 +13,7 @@ define_lisp_function(quit,args)
 
     if( _LENGTH(args) = 0 ) then
         next_l = "-"
-        return _NIL_
+        return _T_
     else
 	_RAISEERROR(LISP_ERR_INVALID_ARGUMENT)
     end if
@@ -96,7 +96,7 @@ define_lisp_function(logmsg,args)
         FATAL(rmsg)
     end select
 
-    return _NIL_
+    return _T_
 
 end_lisp_function()
 
@@ -123,6 +123,8 @@ define_lisp_function(key,args)
         ret = 65352
     case "down"
         ret = 65360
+    case "window-close"
+        ret = 65387
     case else
         ret = 0
     end select
