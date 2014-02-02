@@ -1,7 +1,7 @@
 ;; Level 1
 (defun loaded ()
     (log-message 0 "Loaded level 1")
-    (place-image 0 0 "assets/images/bg/level1.jpg")
+    (place-image (0 0) "assets/images/bg/level1.jpg")
     )
 
 (defun close-window ()
@@ -23,6 +23,11 @@
             (log-message 0 "user requested window close")
             (quit)
             )
-        (princ c)
+        (and
+            (princ c)
+            (draw-circle (100 100) 50 (make-rgb 255 0 0))
+            (paint (100 100) (make-rgb 255 0 0) (make-rgb 255 0 0))
+            (plot-pixel (100 100) (make-rgb 0 255 0))
+            )
         )
     )

@@ -3,7 +3,7 @@
 (defun loaded ()
     (set-screen-size (320 240))
     (set-window-title "Test Game")
-    (place-image 0 0 "assets/images/bg/menu.png")
+    (place-image (0 0) "assets/images/bg/menu.png")
     )
 
 (defun onkey (c)
