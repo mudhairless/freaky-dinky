@@ -72,6 +72,8 @@ define_lisp_function(logmsg,args)
     _OBJ(lvl) = _EVAL(_CAR(args))
     _OBJ(msg) = _EVAL(_CAR(_CDR(args)))
 
+    DEBUG("msg dtype: " & msg->dtype)
+
     var rmsg = ""
     if not _IS_STRING(msg) then
         if _IS_INTEGER(msg) then

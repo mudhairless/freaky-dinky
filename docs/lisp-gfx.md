@@ -23,3 +23,9 @@ Available graphics functions:
 (draw-filled-circle (x y) radius color)
 
 (paint (x y) fill-color stop-color)
+
+(dialog-icon ["none"|"exclaim"|"warning"|"question"])
+
+(show-message "message" [icon])
+
+(get-string "message" [icon])

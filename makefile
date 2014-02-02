@@ -20,10 +20,10 @@ TGF := $(wildcard toepk/*)
 all: $(EXENAME)
 
 %.o : %.bas
-	$(FBC) -m game $(FBC_CFLAGS) -i $(EXTDIR)/include/freebasic -i lib/lisp/inc $(FBC_FLAGS) -c $< -o $@
+	$(FBC) -m game $(FBC_CFLAGS) -i $(EXTDIR)/include/freebasic -i lib/dialogs/inc -i lib/lisp/inc $(FBC_FLAGS) -c $< -o $@
 
 $(EXENAME): $(OBJS) $(DEPLIBS)
-	$(FBC) -m game $(FBC_CFLAGS) $(OBJS) -p $(EXTDIR)/bin/$(TARGET) -p $(EXTDIR)/lib/$(TARGET) -p lib/lisp/lib/$(TARGET) -x $(EXENAME)
+	$(FBC) -m game $(FBC_CFLAGS) $(OBJS) -p $(EXTDIR)/bin/$(TARGET) -p $(EXTDIR)/lib/$(TARGET) -p lib/dialogs/lib/$(TARGET) -p lib/lisp/lib/$(TARGET) -x $(EXENAME)
 
 .PHONY : clean
 clean:

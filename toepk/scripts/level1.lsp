@@ -28,6 +28,7 @@
             (draw-circle (100 100) 50 (make-rgb 255 0 0))
             (paint (100 100) (make-rgb 255 0 0) (make-rgb 255 0 0))
             (plot-pixel (100 100) (make-rgb 0 255 0))
+            (log-message 0 (get-string "Your Name"))
             )
         )
     )

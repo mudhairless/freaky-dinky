@@ -313,7 +313,7 @@ function main () as integer
     var gamever = pakinfoj.child("version")->getString()
     var gamedef = pakinfoj.child("default")->getString()
 
-    ? "Loading " & chr(34) & gamename & " " & gamever & chr(34)
+    INFO("Loading " & chr(34) & gamename & " " & gamever & chr(34))
 
     var prel = pakinfoj.child("at-load")
     if prel <> 0 then

@@ -3,6 +3,8 @@
 #include once "ext/graphics/image.bi"
 #include once "lisp_runtime.bi"
 #include once "ext/log.bi"
+#include once "dialogs.bi"
+#include once "ext/algorithms/detail/common.bi"
 
 using LISP
 
@@ -259,6 +261,92 @@ define_lisp_function(setwintitle,args)
     return _T_
 end_lisp_function()
 
+define_lisp_function(dialogicon,args)
+
+    if _LENGTH(args) <> 1 then
+        _RAISEERROR(LISP_ERR_TOO_FEW_ARGUMENTS)
+        return _NIL_
+    end if
+
+    _OBJ(ret)
+
+    _OBJ(tp) = _EVAL(_CAR(args))
+    var tps = *(tp->value.str)
+
+    select case tps
+    case "exclaim"
+        ret = _NEW_INTEGER(1)
+    case "warning"
+        ret = _NEW_INTEGER(2)
+    case "question"
+        ret = _NEW_INTEGER(3)
+    case else
+        ret = _NEW_INTEGER(0)
+    end select
+
+    return ret
+
+end_lisp_function()
+
+define_lisp_function(dialogmsg,args)
+
+    if _LENGTH(args) > 2 orelse _LENGTH(args) = 0 then
+        _RAISEERROR(LISP_ERR_INVALID_ARGUMENT)
+        return _NIL_
+    end if
+
+    if _LENGTH(args) = 2 then
+    
+        _OBJ(msg) = _EVAL(_CAR(args))
+        _OBJ(icon) = _EVAL(_CAR(_CDR(args)))
+    
+        dialog.message(*(msg->value.str),*icon)
+    
+        return _T_
+    else
+        _OBJ(msg) = _EVAL(_CAR(args))
+        dialog.message(*(msg->value.str))
+        return _T_
+    end if
+
+end_lisp_function()
+
+define_lisp_function(dialoggetstr,args)
+
+    if _LENGTH(args) > 2 orelse _LENGTH(args) = 0 then
+        _RAISEERROR(LISP_ERR_INVALID_ARGUMENT)
+        return _NIL_
+    end if
+
+    if _LENGTH(args) = 2 then
+    
+        _OBJ(msg) = _EVAL(_CAR(args))
+        _OBJ(icon) = _EVAL(_CAR(_CDR(args)))
+    
+        var ret = dialog.input_str(*(msg->value.str),,*icon)
+
+        dim as zstring ptr retz = allocate(len(ret)+1)
+
+        ext.memcpy(retz,@(ret[0]),len(ret))
+
+        _OBJ(reto) = _NEW(OBJECT_TYPE_STRING)
+    
+        return reto
+    else
+        _OBJ(msg) = _EVAL(_CAR(args))
+
+        var ret = dialog.input_str(*(msg->value.str))
+
+        dim as zstring ptr retz = allocate(len(ret)+1)
+
+        ext.memcpy(retz,@(ret[0]),len(ret))
+
+        _OBJ(reto) = _NEW(OBJECT_TYPE_STRING)
+        
+    end if
+
+end_lisp_function()
+
 sub registerGfxApi
     var ctx = lm->Functions
     BIND_FUNC(ctx,"set-screen-size",setscreensize)
@@ -274,4 +362,7 @@ sub registerGfxApi
     BIND_FUNC(ctx,"draw-circle",drawcircle)
     BIND_FUNC(ctx,"draw-filled-circle",drawfcircle)
     BIND_FUNC(ctx,"paint",paint)
+    BIND_FUNC(ctx,"dialog-icon",dialogicon)
+    BIND_FUNC(ctx,"show-message",dialogmsg)
+    BIND_FUNC(ctx,"get-string",dialoggetstr)
 end sub
