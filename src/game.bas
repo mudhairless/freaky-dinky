@@ -172,16 +172,68 @@ function loadAssets( byval al as ext.json.JSONvalue ptr ) as ext.bool
         if al->valueType = ext.json.array then 
             var arr = al->getArray()
             for i as uinteger = 0 to arr->length -1
-                var fn = arr->at(i)->getString()
-                var fnf = pakf->open(fn)
-                am->add(fn,image_asset,fnf)
+                if arr->at(i)->valueType = ext.json.jstring then
+                    var fn = arr->at(i)->getString()
+                    var fnf = pakf->open(fn)
+                    am->add(fn,image_asset,fnf)
+                elseif arr->at(i)->valueType = ext.json.jobject then
+                    var obj = arr->at(i)->getObject()
+                    var n = obj->child("name")->getString()
+                    var t = obj->child("type")->getString()
+                    var f = obj->child("file")->getString()
+                    dim type_ as AssetType
+                    select case lcase(t)
+                    case "sprite"
+                        type_ = sprite_asset
+                    case "map"
+                        type_ = map_asset
+                    case "sound"
+                        type_ = sound_asset
+                    case "music"
+                        type_ = music_asset
+                    case "image"
+                        type_ = image_asset
+                    case else
+                        WARN("Bad asset type in: " & n)
+                        return ext.false
+                    end select
+                    var fnf = pakf->open(f)
+                    am->add(n,type_,fnf,obj)
+                else
+                    WARN("Bad asset type at index: " & i)
+                    return ext.false
+                end if
             next
             return ext.true
         elseif al->valueType= ext.json.jstring then
             am->add(al->getString(),image_asset,pakf->open(al->getString()))
             return ext.true
+        elseif al->valueType = ext.json.jobject then
+            var obj = al->getObject()
+            var n = obj->child("name")->getString()
+            var t = obj->child("type")->getString()
+            var f = obj->child("file")->getString()
+            dim type_ as AssetType
+            select case lcase(t)
+            case "sprite"
+                type_ = sprite_asset
+            case "map"
+                type_ = map_asset
+            case "sound"
+                type_ = sound_asset
+            case "music"
+                type_ = music_asset
+            case "image"
+                type_ = image_asset
+            case else
+                WARN("Bad asset type in: " & n)
+                return ext.false
+            end select
+            var fnf = pakf->open(f)
+            am->add(n,type_,fnf,obj)
+            return ext.true
         else
-            WARN("Value of assets not string or array")
+            WARN("Unknown value for asset")
             return ext.false
         end if
     else
@@ -231,7 +283,16 @@ function runit( byref fn as string ) as ext.bool
     end if
 
     am->dispose()
-    am->load()
+    var loadret = am->load()
+    if loadret <> 0 then
+        select case loadret
+        case -1
+            WARN("AssetManager returned Invalid asset type")
+        case else
+            WARN("AssetManager issue with index: " & loadret)
+        end select
+        return ext.true
+    end if
 
     dim ev as events
     var tmp = mfj.child("ontick")

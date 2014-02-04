@@ -1,6 +1,7 @@
 #include once "ext/algorithms/detail/common.bi"
 #include once "ext/json.bi"
 #include once "ext/graphics/image.bi"
+#include once "ext/graphics/sprite.bi"
 #include once "ext/log.bi"
 #include once "AssetManager.bi"
 #include once "game-defs.bi"
@@ -97,8 +98,53 @@ private function load_image_asset( byval dt as gen_asset ptr ) as ext.bool
     return ext.true
 end function
 
+private sub free_sprite( byval d_ as any ptr )
+    delete cast(ext.gfx.Sprite ptr,d_)
+end sub
+
 private function load_sprite_asset( byval dt as gen_asset ptr ) as ext.bool
     DEBUG("Loading sprite asset: " & dt->n)
+    if dt->d = 0 then
+        WARN("Sprite data not found in JSON")
+        return ext.false
+    end if
+    if dt->f = 0 then return ext.true
+    if screenptr = 0 then
+        screenres 1,1,32,,fb.GFX_NULL
+    end if
+    if screenptr = 0 then
+        WARN("No screen available")
+        return ext.false
+    end if
+    var spriteo = cast(ext.json.JSONobject ptr,dt->d)
+    var i = ext.gfx.LoadImage(*(dt->f))
+    if i = 0 then
+        WARN("Something went wrong loading the spritesheet")
+        return ext.false
+    end if
+    var sprite = new ext.gfx.Sprite()
+    if sprite = 0 then
+        delete i
+        WARN("Could not allocate Sprite")
+        return ext.false
+    end if
+    var xoffset = int(spriteo->child("x-offset")->getNumber())
+    var yoffset = int(spriteo->child("y-offset")->getNumber())
+    var sph = int(spriteo->child("height")->getNumber())
+    var spw = int(spriteo->child("width")->getNumber())
+    var nc = int(spriteo->child("count")->getNumber())
+    sprite->init(nc)
+    var x = sprite->fromSpriteSheet(i,xoffset,yoffset,spw,sph,0,nc)
+    if x <> nc then
+        delete i
+        delete sprite
+        WARN("Expected " & nc & " frames but got " & x)
+        return ext.false
+    end if
+    delete i
+    dt->dfree = @free_sprite
+    dt->d = sprite
+    dt->f = 0
     return ext.true
 end function
 
