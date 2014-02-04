@@ -29,3 +29,11 @@ Available graphics functions:
 (show-message "message" [icon])
 
 (get-string "message" [icon])
+
+(get-integer "message" [icon])
+
+(get-double "message" [icon])
+
+(ask "message" [icon])
+
+(ask-okcancel "message" [icon])

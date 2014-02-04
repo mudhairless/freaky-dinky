@@ -91,6 +91,7 @@ namespace dialog
                 end if
                 imagedestroy m_prevscreen
                 m_prevscreen = 0
+                setmouse(,,1)
         end sub
 
         private sub _fade_bg ( byval w as integer, byval h as integer )
@@ -361,6 +362,32 @@ namespace dialog
                 if retval = chr(27) then *cancel = 1
                 restore_screen
                 return valint(retval)
+        end function
+
+        public function input_dbl( byref msg as string, byval cancel as double ptr, byval i as icon = icon.none ) as double
+                dim as integer s_w, s_h
+                screeninfo( s_w, s_h )
+                save_screen(s_w,s_h)
+                var mm = _draw_dialog_interior( msg, i, 10 )
+
+                var igetstr = ext.xInput()
+                igetstr.maxlength = 14
+                igetstr.cancel = 0
+                igetstr.print_cb = @_draw_input_s
+                var ibb_i = 0
+                if (80) > mm->y1 then
+                        ibb_i =mm->y1-10
+                else
+                        ibb_i = mm->x1+(80)+8
+                end if
+                var ibb = type<dbox>(mm->x1+5, mm->y2-15, ibb_i, mm->y2-5)
+                igetstr.print_cb_data = @ibb
+
+                var retval = igetstr.get(mm->x1+5,mm->y2-10)
+                delete mm
+                if retval = chr(27) then *cancel = 1.0
+                restore_screen
+                return val(retval)
         end function
 
 end namespace

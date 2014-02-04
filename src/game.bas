@@ -1,6 +1,7 @@
 #include once "game-defs.bi"
 #include once "ext/log.bi"
 #include once "ext/json.bi"
+#include once "ext/file/console.bi"
 
 using ext
 dim shared lm as LISP.LispModule ptr
@@ -314,6 +315,7 @@ function main () as integer
     var gamedef = pakinfoj.child("default")->getString()
 
     INFO("Loading " & chr(34) & gamename & " " & gamever & chr(34))
+    console.WriteLine("Loading " & chr(34) & gamename & " " & gamever & chr(34))
 
     var prel = pakinfoj.child("at-load")
     if prel <> 0 then

@@ -328,8 +328,10 @@ define_lisp_function(dialoggetstr,args)
         dim as zstring ptr retz = allocate(len(ret)+1)
 
         ext.memcpy(retz,@(ret[0]),len(ret))
-
+        retz[len(ret)] = 0
         _OBJ(reto) = _NEW(OBJECT_TYPE_STRING)
+
+        reto->value.str = retz
     
         return reto
     else
@@ -340,10 +342,134 @@ define_lisp_function(dialoggetstr,args)
         dim as zstring ptr retz = allocate(len(ret)+1)
 
         ext.memcpy(retz,@(ret[0]),len(ret))
-
+        retz[len(ret)] = 0
         _OBJ(reto) = _NEW(OBJECT_TYPE_STRING)
+
+        reto->value.str = retz
+
+        return reto
         
     end if
+
+end_lisp_function()
+
+define_lisp_function(dialoggetdbl,args)
+
+    if _LENGTH(args) > 2 orelse _LENGTH(args) = 0 then
+        _RAISEERROR(LISP_ERR_INVALID_ARGUMENT)
+        return _NIL_
+    end if
+
+    if _LENGTH(args) = 2 then
+    
+        _OBJ(msg) = _EVAL(_CAR(args))
+        _OBJ(icon) = _EVAL(_CAR(_CDR(args)))
+        var nu = 0.0
+        var ret = dialog.input_dbl(*(msg->value.str),@nu,*icon)
+
+        _OBJ(reto) = _NEW(OBJECT_TYPE_REAL)
+        reto->value.flt = ret
+    
+        return reto
+    else
+        _OBJ(msg) = _EVAL(_CAR(args))
+        var nu = 0.0
+        var ret = dialog.input_dbl(*(msg->value.str),@nu)
+
+        _OBJ(reto) = _NEW(OBJECT_TYPE_REAL)
+        reto->value.flt = ret
+        return reto
+        
+    end if
+
+end_lisp_function()
+
+
+define_lisp_function(dialoggetint,args)
+
+    if _LENGTH(args) > 2 orelse _LENGTH(args) = 0 then
+        _RAISEERROR(LISP_ERR_INVALID_ARGUMENT)
+        return _NIL_
+    end if
+
+    if _LENGTH(args) = 2 then
+    
+        _OBJ(msg) = _EVAL(_CAR(args))
+        _OBJ(icon) = _EVAL(_CAR(_CDR(args)))
+        var nu = 0
+        var ret = dialog.input_int(*(msg->value.str),@nu,*icon)
+
+        _OBJ(reto) = _NEW_INTEGER(ret)
+    
+        return reto
+    else
+        _OBJ(msg) = _EVAL(_CAR(args))
+        var nu = 0
+        var ret = dialog.input_int(*(msg->value.str),@nu)
+
+        _OBJ(reto) = _NEW_INTEGER(ret)
+
+        return reto
+        
+    end if
+
+end_lisp_function()
+
+define_lisp_function(dialogyesno,args)
+
+    if _LENGTH(args) > 2 orelse _LENGTH(args) = 0 then
+        _RAISEERROR(LISP_ERR_INVALID_ARGUMENT)
+        return _NIL_
+    end if
+
+    if _LENGTH(args) = 2 then
+    
+        _OBJ(msg) = _EVAL(_CAR(args))
+        _OBJ(icon) = _EVAL(_CAR(_CDR(args)))
+    
+        var ret = dialog.question(*(msg->value.str),,*icon)
+
+        if ret = dialog.response.yes then return _T_
+
+    else
+        _OBJ(msg) = _EVAL(_CAR(args))
+
+        var ret = dialog.question(*(msg->value.str))
+
+        if ret = dialog.response.yes then return _T_
+
+    end if
+
+    return _NIL_
+
+end_lisp_function()
+
+define_lisp_function(dialogokcancel,args)
+
+    if _LENGTH(args) > 2 orelse _LENGTH(args) = 0 then
+        _RAISEERROR(LISP_ERR_INVALID_ARGUMENT)
+        return _NIL_
+    end if
+
+    if _LENGTH(args) = 2 then
+    
+        _OBJ(msg) = _EVAL(_CAR(args))
+        _OBJ(icon) = _EVAL(_CAR(_CDR(args)))
+    
+        var ret = dialog.question(*(msg->value.str),,*icon)
+
+        if ret = dialog.response.ok then return _T_
+
+    else
+        _OBJ(msg) = _EVAL(_CAR(args))
+
+        var ret = dialog.question(*(msg->value.str))
+
+        if ret = dialog.response.ok then return _T_
+
+    end if
+
+    return _NIL_
 
 end_lisp_function()
 
@@ -365,4 +491,8 @@ sub registerGfxApi
     BIND_FUNC(ctx,"dialog-icon",dialogicon)
     BIND_FUNC(ctx,"show-message",dialogmsg)
     BIND_FUNC(ctx,"get-string",dialoggetstr)
+    BIND_FUNC(ctx,"get-integer",dialoggetint)
+    BIND_FUNC(ctx,"get-double",dialoggetdbl)
+    BIND_FUNC(ctx,"ask",dialogyesno)
+    BIND_FUNC(ctx,"ask-okcancel",dialogokcancel)
 end sub

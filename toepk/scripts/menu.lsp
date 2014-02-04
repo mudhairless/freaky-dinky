@@ -18,7 +18,7 @@
         (if (< 200 y)
             (if (< 160 x)
                 (and
-                    (show-message "Goodbye\vSweet Prince" (dialog-icon "exclaim"))
+                    (ask "Are you sure you\vwant to exit?" (dialog-icon "exclaim"))
                     (quit)
                     )
                 (chain-to "levels/00001.json")

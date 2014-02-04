@@ -31,6 +31,7 @@ declare sub message( byref msg as string, byval i as icon = icon.none, byref but
 declare function question( byref msg as string, byval _t as qtype = qtype.YesNo, byval i as icon = icon.none ) as response
 declare function input_str( byref msg as string, byval max_len as integer = 50, byval i as icon = icon.none ) as string
 declare function input_int( byref msg as string, byval cancel as integer ptr, byval i as icon = icon.none ) as integer
+declare function input_dbl( byref msg as string, byval cancel as double ptr, byval i as icon = icon.none ) as double
 
 'advanced dialogs
 type _custom_callback as sub (  byval dx as integer, byval dy as integer, byval _ud as any ptr )

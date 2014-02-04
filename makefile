@@ -10,7 +10,7 @@ OBJS := $(patsubst %.bas,%.o,$(SRCS))
 DEPLIBS := lib/lisp/lib/$(TARGET)/liblisp.a lib/dialogs/lib/$(TARGET)/libdialogs.a
 
 ifndef EXTDIR
-	EXTDIR := ~/projects/ext
+	EXTDIR := ~/projects/ext-git
 endif
 
 TGF := $(wildcard toepk/*)
