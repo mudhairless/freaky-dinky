@@ -1,7 +1,6 @@
 #include once "game-defs.bi"
 #include once "ext/log.bi"
 #include once "ext/json.bi"
-#include once "ext/file/console.bi"
 
 using ext
 dim shared lm as LISP.LispModule ptr

@@ -117,8 +117,9 @@ private function load_sprite_asset( byval dt as gen_asset ptr ) as ext.bool
         return ext.false
     end if
     var spriteo = cast(ext.json.JSONobject ptr,dt->d)
-    var i = ext.gfx.LoadImage(*(dt->f))
+    var i = ext.gfx.LoadImage(*(dt->f),right(spriteo->child("file")->getString(),3))
     if i = 0 then
+        ext.console.WriteLine(*spriteo)
         WARN("Something went wrong loading the spritesheet")
         return ext.false
     end if
@@ -135,7 +136,7 @@ private function load_sprite_asset( byval dt as gen_asset ptr ) as ext.bool
     var nc = int(spriteo->child("count")->getNumber())
     sprite->init(nc)
     var x = sprite->fromSpriteSheet(i,xoffset,yoffset,spw,sph,0,nc)
-    if x <> nc then
+    if x < nc then
         delete i
         delete sprite
         WARN("Expected " & nc & " frames but got " & x)

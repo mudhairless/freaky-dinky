@@ -1,4 +1,5 @@
 #include once "ext/file/zipfile.bi"
+#include once "ext/file/console.bi"
 #include once "lisp.bi"
 #include once "AssetManager.bi"
 

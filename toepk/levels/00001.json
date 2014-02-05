@@ -1,16 +1,20 @@
 {
-    "assets": ["assets/images/bg/level1.jpg",
+    "assets": [
+        "assets/images/bg/level1.jpg",
         {
             "name": "player",
             "file": "assets/images/sprites/player.png",
-            "type": "sprite"
+            "type": "sprite",
             "x-offset": 0,
             "y-offset": 0,
             "width": 64,
             "height": 64,
             "count": 4
-        }],
+            }
+        ],
     "scripts": "scripts/level1.lsp",
     "onload": "loaded",
-    "onkey": "key-press"
+    "onkey": "key-press",
+    "ontick": "tick",
+    "onclick": "click"
 }

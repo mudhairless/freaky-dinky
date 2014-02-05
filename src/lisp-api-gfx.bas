@@ -4,6 +4,7 @@
 declare sub registerGfxDialogApi
 declare sub registerGfxImageApi
 declare sub registerGfxScreenApi
+declare sub registerSpriteGfxApi
 
 using LISP
 
@@ -31,8 +32,16 @@ define_lisp_function(setscreensize,args)
 end_lisp_function()
 
 define_lisp_function(clearscreen,args)
-    screenlock
     cls
+    return _T_
+end_lisp_function()
+
+define_lisp_function(screenlock,args)
+    screenlock
+    return _T_
+end_lisp_function()
+
+define_lisp_function(screenunlock,args)
     screenunlock
     return _T_
 end_lisp_function()
@@ -43,9 +52,9 @@ define_lisp_function(makergb,args)
                 _RAISEERROR( LISP_ERR_TOO_FEW_ARGUMENTS )
         end if
 
-        _OBJ(p1) = _EVAL(_CAR(args))                                    '' 1st arg
-        _OBJ(p2) = _EVAL(_CAR(_CDR(args)))                              '' 2nd arg
-        _OBJ(p3) = _EVAL(_CAR(_CDR(_CDR(args))))                '' 3rd arg
+        _OBJ(p1) = _EVAL(_CAR(args))
+        _OBJ(p2) = _EVAL(_CAR(_CDR(args)))
+        _OBJ(p3) = _EVAL(_CAR(_CDR(_CDR(args))))
 
         _OBJ(res) = _NEW(OBJECT_TYPE_INTEGER)
         res->value.int = rgb(*p1,*p2,*p3)
@@ -69,6 +78,16 @@ define_lisp_function(setwintitle,args)
     return _T_
 end_lisp_function()
 
+define_lisp_function(waitms,args)
+
+    _OBJ(wt) = _EVAL(_CAR(args))
+
+    sleep *wt,1
+
+    return _T_
+
+end_lisp_function()
+
 
 sub registerGfxApi
     var ctx = lm->Functions
@@ -76,10 +95,13 @@ sub registerGfxApi
     BIND_FUNC(ctx,"set-window-title",setwintitle)
     BIND_FUNC(ctx,"clear-screen",clearscreen)
     BIND_FUNC(ctx,"make-rgb",makergb)
+    BIND_FUNC(ctx,"lock-screen",screenlock)
+    BIND_FUNC(ctx,"unlock-screen",screenunlock)
+    BIND_FUNC(ctx,"wait-ms",waitms)
 
     registerGfxScreenApi
     registerGfxImageApi
     registerGfxDialogApi
     registerGfxScreenApi
-
+    registerSpriteGfxApi
 end sub

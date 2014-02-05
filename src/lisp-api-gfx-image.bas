@@ -43,9 +43,7 @@ define_lisp_function(placeimage,args)
             _RAISEERROR(LISP_ERR_INVALID_ARGUMENT)
             return _NIL_
         end if
-        screenlock
         a->Display(*p1,*p2,ext.gfx.TRANS_)
-        screenunlock
         return _T_
     else
         _RAISEERROR(LISP_ERR_INVALID_ARGUMENT)
